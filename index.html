@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#e94560">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="حاسبة">
+  <link rel="manifest" href="manifest.json">
+  <title>آلة حاسبة</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #1a1a2e;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+
+    .calculator {
+      background: #16213e;
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      width: 320px;
+      max-width: 95vw;
+    }
+
+    .display {
+      background: #0f3460;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: right;
+      margin-bottom: 20px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .expression {
+      color: #888;
+      font-size: 14px;
+      min-height: 20px;
+      margin-bottom: 8px;
+    }
+
+    .result {
+      color: #e94560;
+      font-size: 40px;
+      font-weight: bold;
+      word-break: break-all;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 0;
+      height: 65px;
+      border: none;
+      border-radius: 14px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      font-weight: bold;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      transform: scale(0.93);
+      opacity: 0.8;
+    }
+
+    .btn-number { background: #1a1a2e; color: white; }
+    .btn-operator { background: #0f3460; color: #e94560; }
+    .btn-equal { background: #e94560; color: white; grid-column: span 2; }
+    .btn-clear { background: #e94560; color: white; }
+    .btn-zero { grid-column: span 2; }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-clear" onclick="clearAll()">C</button>
+      <button class="btn-operator" onclick="deleteLast()">⌫</button>
+      <button class="btn-operator" onclick="appendValue('%')">%</button>
+      <button class="btn-operator" onclick="appendValue('/')">÷</button>
+
+      <button class="btn-number" onclick="appendValue('7')">7</button>
+      <button class="btn-number" onclick="appendValue('8')">8</button>
+      <button class="btn-number" onclick="appendValue('9')">9</button>
+      <button class="btn-operator" onclick="appendValue('*')">×</button>
+
+      <button class="btn-number" onclick="appendValue('4')">4</button>
+      <button class="btn-number" onclick="appendValue('5')">5</button>
+      <button class="btn-number" onclick="appendValue('6')">6</button>
+      <button class="btn-operator" onclick="appendValue('-')">−</button>
+
+      <button class="btn-number" onclick="appendValue('1')">1</button>
+      <button class="btn-number" onclick="appendValue('2')">2</button>
+      <button class="btn-number" onclick="appendValue('3')">3</button>
+      <button class="btn-operator" onclick="appendValue('+')">+</button>
+
+      <button class="btn-number btn-zero" onclick="appendValue('0')">0</button>
+      <button class="btn-number" onclick="appendValue('.')">.</button>
+      <button class="btn-equal" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+
+    let current = '';
+
+    function appendValue(val) {
+      current += val;
+      document.getElementById('result').textContent = current || '0';
+    }
+
+    function clearAll() {
+      current = '';
+      document.getElementById('result').textContent = '0';
+      document.getElementById('expression').textContent = '';
+    }
+
+    function deleteLast() {
+      current = current.slice(0, -1);
+      document.getElementById('result').textContent = current || '0';
+    }
+
+    function calculate() {
+      try {
+        let expr = current.replace(/÷/g, '/').replace(/×/g, '*');
+        let result = Function('"use strict"; return (' + expr + ')')();
+        document.getElementById('expression').textContent = current + ' =';
+        // Round to avoid floating point weirdness
+        result = Math.round(result * 1e10) / 1e10;
+        document.getElementById('result').textContent = result;
+        current = result.toString();
+      } catch {
+        document.getElementById('result').textContent = 'خطأ ❌';
+        current = '';
+      }
+    }
+  </script>
+</body>
+</html>
